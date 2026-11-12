@@ -1,6 +1,7 @@
 
 import type { NextApiRequest, NextApiResponse } from "next";
 import { USERS_COLLECTION, getDatabase } from "@/server/getDatabase";
+import { requireAdmin } from "@/server/requireAdmin";
 
 export default async function handleAdminUsersRequest(
   request: NextApiRequest,
@@ -13,6 +14,11 @@ export default async function handleAdminUsersRequest(
   }
 
   try {
+    if (!(await requireAdmin(request))) {
+      return response.status(403).json({
+        message: "Admin access required."
+      })
+    }
     const users = await getDatabase()
       .collection(USERS_COLLECTION)
       .find({}, { projection: { password: 0 } })

@@ -1,6 +1,7 @@
 
 import type { NextApiRequest, NextApiResponse } from "next";
 import { ANIMALS_COLLECTION, getDatabase } from "@/server/getDatabase";
+import { requireAdmin } from "@/server/requireAdmin";
 
 export default async function handleAdminAnimalsRequest(
   request: NextApiRequest,
@@ -13,6 +14,11 @@ export default async function handleAdminAnimalsRequest(
   }
 
   try {
+    if (!(await requireAdmin(request))) {
+      return response.status(403).json({
+        message: "Admin access required."
+      });
+    }
     const animals = await getDatabase()
       .collection(ANIMALS_COLLECTION)
       .find({})
@@ -25,6 +31,6 @@ export default async function handleAdminAnimalsRequest(
         message: "Could not retrieve animals.",
         error: error instanceof Error ? error.message : String(error),
     });
-}  
+}
 }
 

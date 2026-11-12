@@ -55,7 +55,7 @@ export default async function handler(
             user._id.toString()
         );
 
-        const cookie = [`${COOKIE_NAME} = ${encodeURIComponent(token)}`, "HttpOnly", "Path=/", "SameSite=Lax", "Max-Age=86400", ...(process.env.NODE_ENV === "production" ? ["Secure"] : []),].join("; ")
+        const cookie = [`${COOKIE_NAME}=${encodeURIComponent(token)}`, "HttpOnly", "Path=/", "SameSite=Lax", "Max-Age=86400", ...(process.env.NODE_ENV === "production" ? ["Secure"] : []),].join("; ")
 
         res.setHeader("Set-Cookie", cookie);
 

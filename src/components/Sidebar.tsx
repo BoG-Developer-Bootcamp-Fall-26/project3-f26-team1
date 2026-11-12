@@ -26,11 +26,23 @@ export default function Sidebar({
         );
     }, [userName, isAdmin]);
 
-    function handleLogout() {
-        sessionStorage.removeItem("userId");
-        sessionStorage.removeItem("userName");
-        sessionStorage.removeItem("isAdmin");
-        router.push("/");
+    async function handleLogout() {
+        try {
+            const response = await fetch("/api/logout", {
+                method: "POST"
+            })
+
+            if (!response.ok) {
+                throw new Error("Logout failed.")
+            }
+            sessionStorage.removeItem("userId");
+            sessionStorage.removeItem("userName");
+            sessionStorage.removeItem("isAdmin");
+            await router.push("/");
+        } catch (error) {
+            console.error("Logout error:", error);
+            alert("Could not log out. Please try again.")
+        }
     }
 
     const links = [
@@ -45,7 +57,7 @@ export default function Sidebar({
     ];
 
     return (
-        <aside className="flex min-h-screen w-64 shrink-0 flex-col bg-slate-900 p-5 text-white">
+        <aside className="flex h-full min-h-0 w-64 shrink-0 flex-col overflow-y-auto bg-slate-900 p-5 text-white">
             <h2 className="mb-10 text-2xl font-bold">
                 Animal Training
             </h2>

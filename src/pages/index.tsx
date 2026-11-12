@@ -31,7 +31,8 @@ export default function Home() {
       }
 
       sessionStorage.setItem("userId", data.user.id);
-      sessionStorage.setItem("isAdmin", String(data.user.isAdmin));
+      sessionStorage.setItem("userName", data.user.fullName);
+      sessionStorage.setItem("isAdmin", String(data.user.admin));
 
       await router.push("/admin/training");
     } catch (err) {

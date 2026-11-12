@@ -14,7 +14,7 @@ export default function SharedLayout({ pageTitle, headerAction, onSearchChange, 
     <div className="flex h-screen flex-col bg-white">
       <TopBar onSearchChange={onSearchChange} />
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex min-h-0 flex-1 overflow-hidden">
         <Sidebar />
 
         <main className="flex flex-1 flex-col overflow-y-auto">
