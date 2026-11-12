@@ -11,7 +11,7 @@ export default async function handler(
     }
 
     try {
-        const { fullName, email, password } = req.body ?? {};
+        const { fullName, email, password, admin } = req.body ?? {};
 
         if (typeof fullName !== "string" || typeof email !== "string" || typeof password !== "string" || !fullName.trim() || !email.trim() || password.length < 8) {
             return res.status(400).json({
@@ -42,7 +42,7 @@ export default async function handler(
             fullName: fullName.trim(),
             email: normalizedEmail,
             password: hashedPassword,
-            admin: false
+            admin: admin === true
         })
 
         return res.status(200).json({

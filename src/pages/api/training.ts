@@ -1,9 +1,14 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { ObjectId } from "mongodb";
-import { ANIMALS_COLLECTION, getDatabase, TRAINING_LOGS_COLLECTION } from "@/server/getDatabase";
+import { ANIMALS_COLLECTION, getDatabase, TRAINING_LOGS_COLLECTION, USERS_COLLECTION } from "@/server/getDatabase";
 import { isDatabaseId, isFilledString, isZeroOrMore } from "@/server/validateInput";
 
 export default async function handleTrainingRequest(request: NextApiRequest, response: NextApiResponse) {
+  if (request.method === "GET") {
+    await getTrainingLogsForUser(request, response);
+    return;
+  }
+
   if (request.method === "POST") {
     await createTrainingLog(request, response);
     return;
@@ -15,6 +20,54 @@ export default async function handleTrainingRequest(request: NextApiRequest, res
   }
 
   response.status(405).json({ message: "Method not allowed." });
+}
+
+async function getTrainingLogsForUser(request: NextApiRequest, response: NextApiResponse) {
+  const userId = request.query.userId;
+
+  if (typeof userId !== "string" || !isDatabaseId(userId)) {
+    response.status(400).json({ message: "userId must be a valid user id." });
+    return;
+  }
+
+  try {
+    const database = getDatabase();
+    const userObjectId = new ObjectId(userId);
+
+    const user = await database.collection(USERS_COLLECTION).findOne({ _id: userObjectId });
+    const logs = await database
+      .collection(TRAINING_LOGS_COLLECTION)
+      .find({ user: userObjectId })
+      .sort({ date: -1 })
+      .toArray();
+
+    const logsWithDetails = [];
+    for (const log of logs) {
+      const animal = await database.collection(ANIMALS_COLLECTION).findOne({ _id: log.animal });
+
+      logsWithDetails.push({
+        _id: log._id.toString(),
+        title: log.title,
+        date: new Date(log.date).toISOString(),
+        description: log.description,
+        hours: log.hours,
+        user: {
+          _id: userId,
+          fullName: user?.fullName ?? "Unknown user",
+        },
+        animal: {
+          _id: log.animal.toString(),
+          name: animal?.name ?? "Unknown animal",
+          breed: animal?.breed ?? "Unknown",
+        },
+      });
+    }
+
+    response.status(200).json(logsWithDetails);
+  } catch (error) {
+    console.error(error);
+    response.status(500).json({ message: "Could not load training logs." });
+  }
 }
 
 async function createTrainingLog(request: NextApiRequest, response: NextApiResponse) {
