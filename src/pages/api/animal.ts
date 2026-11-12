@@ -4,6 +4,11 @@ import { ANIMALS_COLLECTION, getDatabase, USERS_COLLECTION } from "@/server/getD
 import { isDatabaseId, isFilledString, isNumber, isZeroOrMore } from "@/server/validateInput";
 
 export default async function handleAnimalRequest(request: NextApiRequest, response: NextApiResponse) {
+  if (request.method === "GET") {
+    await getAnimalsForUser(request, response);
+    return;
+  }
+
   if (request.method === "POST") {
     await createAnimal(request, response);
     return;
@@ -15,6 +20,27 @@ export default async function handleAnimalRequest(request: NextApiRequest, respo
   }
 
   response.status(405).json({ message: "Method not allowed." });
+}
+
+async function getAnimalsForUser(request: NextApiRequest, response: NextApiResponse) {
+  const userId = request.query.userId;
+
+  if (typeof userId !== "string" || !isDatabaseId(userId)) {
+    response.status(400).json({ message: "userId must be a valid user id." });
+    return;
+  }
+
+  try {
+    const animals = await getDatabase()
+      .collection(ANIMALS_COLLECTION)
+      .find({ owner: new ObjectId(userId) })
+      .toArray();
+
+    response.status(200).json(animals);
+  } catch (error) {
+    console.error(error);
+    response.status(500).json({ message: "Could not load animals." });
+  }
 }
 
 async function addAnimalHours(request: NextApiRequest, response: NextApiResponse) {

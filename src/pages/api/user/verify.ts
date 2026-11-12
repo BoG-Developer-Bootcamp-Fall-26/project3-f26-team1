@@ -34,7 +34,7 @@ export default async function handler(
         console.log("Has password hash:", typeof user?.password === "string");
 
         if (!user || typeof user.password !== "string") {
-            return res.status(401).json({
+            return res.status(500).json({
                 error: "Invalid email or password"
             })
         }
@@ -46,8 +46,8 @@ export default async function handler(
         console.log("Password valid:", validPassword);
 
         if (!validPassword) {
-            return res.status(401).json({
-                error: "Invali email or password",
+            return res.status(500).json({
+                error: "Invalid email or password",
             })
         }
 

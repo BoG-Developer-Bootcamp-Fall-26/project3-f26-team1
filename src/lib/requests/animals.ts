@@ -2,6 +2,7 @@ import { readJsonOrThrow } from "@/lib/requests/readJsonOrThrow";
 import type { Animal } from "@/types/models";
 
 const ANIMAL_ENDPOINT = "/api/animal";
+const ADMIN_ANIMALS_ENDPOINT = "/api/admin/animals";
 
 export interface NewAnimalInput {
   name: string;
@@ -9,6 +10,16 @@ export interface NewAnimalInput {
   owner: string;
   hoursTrained: number;
   profilePicture: string;
+}
+
+export async function fetchAnimalsForUser(userId: string): Promise<Animal[]> {
+  const response = await fetch(`${ANIMAL_ENDPOINT}?userId=${encodeURIComponent(userId)}`);
+  return readJsonOrThrow(response, "Could not load animals.");
+}
+
+export async function fetchAllAnimals(): Promise<Animal[]> {
+  const response = await fetch(ADMIN_ANIMALS_ENDPOINT);
+  return readJsonOrThrow(response, "Could not load animals.");
 }
 
 export async function createAnimal(input: NewAnimalInput): Promise<Animal> {

@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
+import { logInUser } from "@/lib/requests/users";
+import { routes } from "@/lib/routes";
 
 export default function Home() {
   const router = useRouter();
@@ -16,25 +18,8 @@ export default function Home() {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/verify", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error("Invalid email or password.");
-      }
-
-      sessionStorage.setItem("userId", data.user.id);
-      sessionStorage.setItem("userName", data.user.fullName);
-      sessionStorage.setItem("isAdmin", String(data.user.admin));
-
-      await router.push("/admin/training");
+      await logInUser(email, password);
+      await router.push(routes.trainingLogs);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Login failed."

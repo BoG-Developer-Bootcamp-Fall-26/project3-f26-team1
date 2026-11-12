@@ -1,75 +1,49 @@
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AnimalCard from "@/components/AnimalCard";
 import SharedLayout from "@/components/layout/SharedLayout";
-
-interface Animal {
-    _id: string;
-    name: string;
-    breed: string;
-    owner: string;
-    hoursTrained: number;
-    profilePicture: string;
-}
-
-const sampleAnimals: Animal[] = [
-    {
-        _id: "1",
-        name: "Lucy",
-        breed: "Golden Retriever",
-        owner: "456",
-        hoursTrained: 100,
-        profilePicture: "https://images.dog.ceo/breeds/retriever-golden/n02099601_100.jpg"
-    },
-    {
-        _id: "2",
-        name: "Lucy",
-        breed: "Golden Retriever",
-        owner: "456",
-        hoursTrained: 100,
-        profilePicture: "https://images.dog.ceo/breeds/retriever-golden/n02099601_100.jpg"
-    },
-    {
-        _id: "3",
-        name: "Lucy",
-        breed: "Golden Retriever",
-        owner: "456",
-        hoursTrained: 100,
-        profilePicture: "https://images.dog.ceo/breeds/retriever-golden/n02099601_100.jpg"
-    },
-    {
-        _id: "4",
-        name: "Lucy",
-        breed: "Golden Retriever",
-        owner: "456",
-        hoursTrained: 100,
-        profilePicture: "https://images.dog.ceo/breeds/retriever-golden/n02099601_100.jpg"
-    },
-    {
-        _id: "5",
-        name: "Lucy",
-        breed: "Golden Retriever",
-        owner: "456",
-        hoursTrained: 100,
-        profilePicture: "https://images.dog.ceo/breeds/retriever-golden/n02099601_100.jpg"
-    },
-    {
-        _id: "6",
-        name: "Lucy",
-        breed: "Golden Retriever",
-        owner: "456",
-        hoursTrained: 100,
-        profilePicture: "https://images.dog.ceo/breeds/retriever-golden/n02099601_100.jpg"
-    }
-];
+import ErrorMessage from "@/components/ui/ErrorMessage";
+import { useRequireUserId } from "@/hooks/useRequireUserId";
+import { fetchAnimalsForUser } from "@/lib/requests/animals";
+import { getErrorMessage } from "@/lib/getErrorMessage";
+import type { Animal } from "@/types/models";
 
 export default function AnimalsDashboard() {
+    const userId = useRequireUserId();
+
+    const [animals, setAnimals] = useState<Animal[]>([]);
+    const [ownerName, setOwnerName] = useState("");
+    const [isLoading, setIsLoading] = useState(true);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [search, setSearch] = useState("");
 
-    const filteredAnimals = sampleAnimals.filter((animal) =>
-        `${animal.name} ${animal.breed}`
-            .toLowerCase()
-            .includes(search.toLowerCase())
+    useEffect(() => {
+        if (!userId) {
+            return;
+        }
+
+        async function loadAnimals(forUserId: string) {
+            setIsLoading(true);
+            setErrorMessage(null);
+            try {
+                const fetchedAnimals = await fetchAnimalsForUser(forUserId);
+                setAnimals(fetchedAnimals);
+                setOwnerName(sessionStorage.getItem("userName") ?? "");
+            } catch (error) {
+                setErrorMessage(getErrorMessage(error));
+            } finally {
+                setIsLoading(false);
+            }
+        }
+
+        loadAnimals(userId);
+    }, [userId]);
+
+    if (!userId) {
+        return null;
+    }
+
+    const filteredAnimals = animals.filter((animal) =>
+        animal.name.toLowerCase().includes(search.trim().toLowerCase())
     );
 
     return (
@@ -85,22 +59,24 @@ export default function AnimalsDashboard() {
             }
             onSearchChange={setSearch}
         >
-            <div>
-                {filteredAnimals.length > 0 ? (
-                    <div className="grid grid-cols-1 justify-items-center gap-x-7 gap-y-7 md:grid-cols-2 xl:grid-cols-3">
-                        {filteredAnimals.map((animal) => (
-                            <AnimalCard
-                                key={animal._id}
-                                animal={animal}
-                                ownerName="Long Lam"
-                            />
-                        ))}
-                    </div>
-                ) : (
-                    <p className="py-12 text-center text-gray-500">
-                        No animals found.
-                    </p>
-                )}
+            {isLoading && <p className="text-sm text-gray-500">Loading animals...</p>}
+
+            {errorMessage && <ErrorMessage message={errorMessage} />}
+
+            {!isLoading && !errorMessage && filteredAnimals.length === 0 && (
+                <p className="py-12 text-center text-gray-500">
+                    No animals found.
+                </p>
+            )}
+
+            <div className="grid grid-cols-1 justify-items-center gap-x-7 gap-y-7 md:grid-cols-2 xl:grid-cols-3">
+                {filteredAnimals.map((animal) => (
+                    <AnimalCard
+                        key={animal._id}
+                        animal={animal}
+                        ownerName={ownerName}
+                    />
+                ))}
             </div>
         </SharedLayout>
     );

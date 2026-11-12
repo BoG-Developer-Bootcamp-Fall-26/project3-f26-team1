@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
+import { logInUser } from "@/lib/requests/users";
+import { routes } from "@/lib/routes";
 
 export default function Signup() {
   const router = useRouter();
@@ -33,9 +35,12 @@ export default function Signup() {
       });
 
       if (!response.ok) {
-        throw new Error("Unable to create account.");
+        const data = await response.json();
+        throw new Error(data.error ?? "Unable to create account.");
       }
-      await router.push("/");
+
+      await logInUser(email, password);
+      await router.push(routes.trainingLogs);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Something went wrong."
